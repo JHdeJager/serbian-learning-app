@@ -48,6 +48,8 @@ export function Home({ start, openGuide, toast }: { start: (s: SessionSpec) => v
 
   useEffect(() => {
     if (!open) return;
+    const pop = document.querySelector('.node-wrap .popover');
+    pop?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     const close = (e: Event) => {
       const el = e.target as HTMLElement;
       if (!el.closest('.node-wrap')) setOpen(null);
@@ -140,7 +142,7 @@ export function Home({ start, openGuide, toast }: { start: (s: SessionSpec) => v
                   <div
                     key={key}
                     className="node-wrap"
-                    style={{ transform: `translateX(${offset}px)`, zIndex: isOpen ? 5 : 1 }}
+                    style={{ transform: `translateX(${offset}px)`, zIndex: isOpen ? 9 : 1, marginTop: isCurrent ? 34 : undefined }}
                     ref={isCurrent ? currentRef : undefined}
                   >
                     {isCurrent && !isOpen && <div className="node-start">Start</div>}

@@ -3,14 +3,14 @@ import type { ExProps } from './common';
 import { HintSentence, Txt, useScript } from '../components/Sr';
 import { Mascot } from '../components/Mascot';
 import { MicIcon, SpeakerIcon } from '../components/Icons';
-import { canRecognize, recognize, speak } from '../lib/speech';
+import { canRecognize, hasSerbianVoice, recognize, speak } from '../lib/speech';
 import { grade, gradeTiles, levenshtein, normalize } from '../lib/grading';
 import { sfx } from '../lib/sound';
 import { useStore } from '../lib/store';
 import { toCyrillic } from '../lib/translit';
 
 function useSpeechEnabled() {
-  return useStore((s) => s.settings.listening);
+  return useStore((s) => s.settings.listening) && hasSerbianVoice();
 }
 
 export function SpeakBtn({ text, big, slow }: { text: string; big?: boolean; slow?: boolean }) {

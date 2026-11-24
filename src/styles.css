@@ -348,8 +348,41 @@ h3 {
   }
 }
 
+.main-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+.main-col {
+  flex: 1;
+  min-width: 0;
+  max-width: 620px;
+}
+.aside {
+  display: none;
+}
+@media (min-width: 1150px) {
+  .aside {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 330px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 78px;
+    align-self: flex-start;
+    padding: 20px 16px 0 0;
+  }
+  .aside .card + .card {
+    margin-top: 0;
+  }
+}
+
 /* ---------- Path (home) ---------- */
 .unit-banner {
+  position: sticky;
+  top: 62px;
+  z-index: 8;
   border-radius: var(--radius);
   color: #fff;
   padding: 16px 18px;
@@ -504,6 +537,7 @@ h3 {
   z-index: 10;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   animation: pop 0.15s ease-out;
+  scroll-margin: 90px;
 }
 .popover h3 {
   font-size: 18px;

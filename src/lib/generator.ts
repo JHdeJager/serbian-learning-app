@@ -150,11 +150,14 @@ const PROPER = new Set<string>();
   for (const l of LESSONS)
     for (const sn of l.lesson.sentences) {
       for (const text of [sn.sr, sn.nl]) {
-        tokenize(text)
-          .slice(1)
-          .forEach((t) => {
-            if (t[0] !== t[0].toLowerCase()) PROPER.add(t.toLowerCase());
-          });
+        const raw = text.split(/\s+/);
+        raw.forEach((word, i) => {
+          if (i === 0) return;
+          const prev = raw[i - 1];
+          if (/[.!?–]$/.test(prev) || prev === '–') return; // start of a new sentence
+          const t = tokenize(word)[0];
+          if (t && t[0] !== t[0].toLowerCase()) PROPER.add(t.toLowerCase());
+        });
       }
     }
   for (const w of ALL_WORDS) if (w.sr[0] !== w.sr[0].toLowerCase()) PROPER.add(w.sr.toLowerCase());

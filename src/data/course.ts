@@ -3,10 +3,11 @@ import { u1, u2, u3 } from './units/u01-u03';
 import { u4, u5, u6 } from './units/u04-u06';
 import { u7, u8, u9 } from './units/u07-u09';
 import { u10, u11, u12 } from './units/u10-u12';
+import { u13, u14, u15 } from './units/u13-u15';
 import { GLOSSARY } from './glossary';
 import { tokenize } from '../lib/grading';
 
-export const UNITS: Unit[] = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12];
+export const UNITS: Unit[] = [u1, u2, u3, u4, u5, u6, u7, u8, u9, u10, u11, u12, u13, u14, u15];
 
 export interface LessonRef {
   lesson: Lesson;

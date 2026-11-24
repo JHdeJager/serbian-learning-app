@@ -12,9 +12,10 @@ import { useScript } from '../components/Sr';
 import { SpeakBtn } from '../exercises/Exercises';
 import { BackIcon } from '../components/Icons';
 import { WeekDots } from './Results';
+import { StoriesList } from './Stories';
 
 // ------------------------------------------------------------------
-export function Practice({ start, openWords }: { start: (s: SessionSpec) => void; openWords: () => void }) {
+export function Practice({ start, openWords, openStory }: { start: (s: SessionSpec) => void; openWords: () => void; openStory: (id: string) => void }) {
   const completed = useStore((s) => s.completed);
   const mistakes = useStore((s) => s.mistakes);
   const words = useStore((s) => s.words);
@@ -60,6 +61,13 @@ export function Practice({ start, openWords }: { start: (s: SessionSpec) => void
           Bekijk
         </button>
       </div>
+      <h2 className="section-title" style={{ fontSize: 19 }}>
+        📖 Verhalen
+      </h2>
+      <p className="muted" style={{ marginTop: -6 }}>
+        Lees korte gesprekken in het Servisch en beantwoord de vragen.
+      </p>
+      <StoriesList open={openStory} />
       {learned.length < 4 && (
         <div style={{ textAlign: 'center', marginTop: 24 }}>
           <Mascot mood="think" size={110} />

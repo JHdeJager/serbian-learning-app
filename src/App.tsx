@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useStore, MAX_HEARTS } from './lib/store';
+import { useEffect, useRef, useState } from 'react';
+import { useStore, MAX_HEARTS, todayXp } from './lib/store';
+import { competitors, LEAGUES } from './lib/league';
 import { Home } from './screens/Home';
 import { LessonScreen, type SessionSpec } from './screens/LessonScreen';
 import { Guide, League, Letters, Onboarding, Practice, Profile, SettingsScreen, Shop, Words } from './screens/Screens';
 import { Mascot } from './components/Mascot';
 import { onVoicesChanged } from './lib/speech';
 import { REFILL_COST } from './lib/store';
+import { StoryScreen } from './screens/Stories';
 
 type Tab = 'learn' | 'letters' | 'practice' | 'league' | 'shop' | 'profile';
 type Sub = { kind: 'guide'; unitId: string } | { kind: 'settings' } | { kind: 'words' } | null;
@@ -19,6 +21,52 @@ const TABS: { id: Tab; label: string; ico: string }[] = [
   { id: 'profile', label: 'Profiel', ico: '🦔' }
 ];
 
+function SidePanel({ goTab }: { goTab: (t: Tab) => void }) {
+  const st = useStore();
+  const xpToday = todayXp(st);
+  const list = competitors(st.league, st.name);
+  const rank = list.findIndex((c) => c.isMe) + 1;
+  return (
+    <>
+      <div className="card">
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <b>Dagdoel</b>
+          <span className="muted" style={{ fontWeight: 800 }}>
+            {Math.min(xpToday, st.dailyGoal)}/{st.dailyGoal} XP
+          </span>
+        </div>
+        <div className={`progress ${xpToday >= st.dailyGoal ? 'gold' : ''}`} style={{ marginTop: 10 }}>
+          <div style={{ width: `${Math.min(100, (xpToday / st.dailyGoal) * 100)}%` }} />
+        </div>
+      </div>
+      <div className="card">
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <b>
+            {LEAGUES[st.league.tier].emoji} Liga {LEAGUES[st.league.tier].name}
+          </b>
+          <button className="btn flat small" onClick={() => goTab('league')}>
+            Bekijk
+          </button>
+        </div>
+        <p className="muted" style={{ margin: '6px 0 0' }}>
+          Je staat op plek {rank} met {st.league.xp} XP deze week.
+        </p>
+      </div>
+      <div className="card row">
+        <Mascot size={70} mood={st.streak ? 'cheer' : 'happy'} />
+        <div>
+          <b>
+            🔥 {st.streak} {st.streak === 1 ? 'dag' : 'dagen'} streak
+          </b>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 15 }}>
+            {xpToday > 0 ? 'Je hebt vandaag al geleerd. Odlično!' : 'Doe vandaag een les om je streak te verlengen.'}
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const onboarded = useStore((s) => s.onboarded);
   const st = useStore();
@@ -26,10 +74,12 @@ export default function App() {
   const [sub, setSub] = useState<Sub>(null);
   const [session, setSession] = useState<SessionSpec | null>(null);
   const [sessionId, setSessionId] = useState(0);
+  const [story, setStory] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [heartsModal, setHeartsModal] = useState(false);
   const [streakModal, setStreakModal] = useState(false);
   const [, force] = useState(0);
+  const ignorePop = useRef(0);
 
   useEffect(() => {
     const s = useStore.getState();
@@ -47,13 +97,18 @@ export default function App() {
   // Android back button / browser back: close sub screens and lessons
   useEffect(() => {
     const onPop = () => {
+      if (ignorePop.current > 0) {
+        ignorePop.current -= 1;
+        return;
+      }
       if (session) setSession(null);
+      else if (story) setStory(null);
       else if (sub) setSub(null);
       else if (tab !== 'learn') setTab('learn');
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [session, sub, tab]);
+  }, [session, sub, tab, story]);
 
   const pushNav = () => history.pushState({ govori: true }, '');
 
@@ -77,10 +132,28 @@ export default function App() {
 
   const exitSession = () => {
     setSession(null);
-    if (history.state?.govori) history.back();
+    if (history.state?.govori) {
+      ignorePop.current += 1;
+      history.back();
+    }
   };
 
   if (!onboarded) return <Onboarding />;
+
+  if (story)
+    return (
+      <StoryScreen
+        key={story}
+        id={story}
+        onExit={() => {
+          setStory(null);
+          if (history.state?.govori) {
+      ignorePop.current += 1;
+      history.back();
+    }
+        }}
+      />
+    );
 
   if (session) return <LessonScreen key={sessionId} spec={session} onExit={exitSession} />;
 
@@ -96,7 +169,10 @@ export default function App() {
   };
   const closeSub = () => {
     setSub(null);
-    if (history.state?.govori) history.back();
+    if (history.state?.govori) {
+      ignorePop.current += 1;
+      history.back();
+    }
   };
 
   let content;
@@ -105,7 +181,14 @@ export default function App() {
   else if (sub?.kind === 'words') content = <Words back={closeSub} />;
   else if (tab === 'learn') content = <Home start={start} openGuide={(unitId) => openSub({ kind: 'guide', unitId })} toast={toast} />;
   else if (tab === 'letters') content = <Letters start={start} />;
-  else if (tab === 'practice') content = <Practice start={start} openWords={() => openSub({ kind: 'words' })} />;
+  else if (tab === 'practice') content = <Practice
+        start={start}
+        openWords={() => openSub({ kind: 'words' })}
+        openStory={(id) => {
+          pushNav();
+          setStory(id);
+        }}
+      />;
   else if (tab === 'league') content = <League />;
   else if (tab === 'shop') content = <Shop toast={toast} />;
   else content = <Profile openSettings={() => openSub({ kind: 'settings' })} />;
@@ -147,7 +230,12 @@ export default function App() {
             </button>
           </div>
         </header>
-        {content}
+        <div className="main-row">
+          <div className="main-col">{content}</div>
+          <aside className="aside">
+            <SidePanel goTab={goTab} />
+          </aside>
+        </div>
       </div>
 
       {heartsModal && (
