@@ -57,6 +57,10 @@ describe('session generation', () => {
             const texts = e.options.map((o) => normalize(o.text));
             expect(new Set(texts).size, JSON.stringify(e.options)).toBe(texts.length);
           }
+          if (e.type === 'pictures') {
+            const em = e.options.map((o) => o.emoji);
+            expect(new Set(em).size).toBe(em.length);
+          }
           if (e.type === 'match') {
             const rights = e.pairs.map((p) => normalize(p.right));
             expect(new Set(rights).size).toBe(rights.length);

@@ -203,6 +203,7 @@ function optionsFor(target: Word, pool: Word[], n: number, _by: 'sr' | 'nl'): Wo
   for (const w of shuffle(pool)) {
     if (out.length >= n) break;
     if (w.id === target.id || confusable(w, target) || out.some((o) => confusable(o, w))) continue;
+    if (_by === 'sr' && w.emoji && (w.emoji === target.emoji || out.some((o) => o.emoji === w.emoji))) continue;
     out.push(w);
   }
   return out;

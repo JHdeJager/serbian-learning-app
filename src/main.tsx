@@ -6,9 +6,9 @@ import '@fontsource/nunito/800.css';
 import '@fontsource/nunito/900.css';
 import './styles.css';
 import App from './App';
-import { registerSW } from 'virtual:pwa-register';
-
-registerSW({ immediate: true });
+if (!import.meta.env.VITE_ARTIFACT && 'serviceWorker' in navigator) {
+  import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true })).catch(() => {});
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
