@@ -154,7 +154,7 @@ const PROPER = new Set<string>();
         raw.forEach((word, i) => {
           if (i === 0) return;
           const prev = raw[i - 1];
-          if (/[.!?–]$/.test(prev) || prev === '–') return; // start of a new sentence
+          if (/[.!?–]$/.test(prev) || prev === '–' || (i === 1 && /^'s$/i.test(prev))) return; // start of a new sentence
           const t = tokenize(word)[0];
           if (t && t[0] !== t[0].toLowerCase()) PROPER.add(t.toLowerCase());
         });
