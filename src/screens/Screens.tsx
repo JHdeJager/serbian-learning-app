@@ -1,12 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import { DOUBLE_XP_COST, exportState, FREEZE_COST, MAX_HEARTS, REFILL_COST, HEART_REFILL_MS, useStore } from '../lib/store';
+import { exportState, useStore } from '../lib/store';
 import { Mascot } from '../components/Mascot';
 import { learnedWords, findUnit, UNITS, LESSONS, isLessonDone } from '../data/course';
 import { LETTER_LESSONS } from '../lib/generator';
 import { ALPHABET, toCyrillic } from '../lib/translit';
 import { speak, hasSerbianVoice, voiceName } from '../lib/speech';
 import type { SessionSpec } from './LessonScreen';
-import { competitors, daysLeftInWeek, LEAGUES } from '../lib/league';
 import { addDays, dayKey, NL_DAYS_SHORT, parseDay } from '../lib/date';
 import { useScript } from '../components/Sr';
 import { SpeakBtn } from '../exercises/Exercises';
@@ -236,149 +235,6 @@ export function Letters({ start }: { start: (s: SessionSpec) => void }) {
 }
 
 // ------------------------------------------------------------------
-export function League() {
-  const league = useStore((s) => s.league);
-  const name = useStore((s) => s.name);
-  const list = competitors(league, name);
-  const tier = LEAGUES[league.tier];
-  const days = daysLeftInWeek(league.week);
-  return (
-    <div className="page">
-      <div style={{ textAlign: 'center', marginTop: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, fontSize: 40 }}>
-          {LEAGUES.map((l, i) => (
-            <span key={l.name} style={{ opacity: i === league.tier ? 1 : 0.3, transform: i === league.tier ? 'scale(1.25)' : undefined }}>
-              {l.emoji}
-            </span>
-          ))}
-        </div>
-        <h1 className="section-title" style={{ marginTop: 10 }}>
-          Liga {tier.name}
-        </h1>
-        <p className="muted" style={{ marginTop: -6 }}>
-          De top 5 promoveert naar de volgende liga · nog {days} {days === 1 ? 'dag' : 'dagen'}
-        </p>
-      </div>
-      {league.lastResult && (
-        <div className="card" style={{ textAlign: 'center', marginBottom: 12 }}>
-          <b>
-            Vorige week: plek {league.lastResult.rank}.{' '}
-            {league.lastResult.moved === 'up'
-              ? `Gepromoveerd naar ${LEAGUES[league.lastResult.tier].name}! 🎉`
-              : league.lastResult.moved === 'down'
-                ? `Gedegradeerd naar ${LEAGUES[league.lastResult.tier].name}.`
-                : 'Je blijft in deze liga.'}
-          </b>
-        </div>
-      )}
-      <div className="card" style={{ padding: '4px 10px' }}>
-        {list.map((c, i) => (
-          <div key={c.name + i}>
-            {i === 5 && league.tier < LEAGUES.length - 1 && <div className="zone up">▲ Promotiezone ▲</div>}
-            {i === 12 && league.tier > 0 && <div className="zone down">▼ Degradatiezone ▼</div>}
-            <div className={`list-item league-row ${c.isMe ? 'me' : ''}`}>
-              <div className={`rank ${i < 5 ? 'up' : i >= 12 ? 'down' : ''}`}>{i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
-              <div className="avatar">{c.avatar}</div>
-              <div className="grow">
-                <b>{c.isMe ? `${c.name || 'Jij'} (jij)` : c.name}</b>
-              </div>
-              <div style={{ fontWeight: 800 }}>{c.xp} XP</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <p className="muted" style={{ fontSize: 13, textAlign: 'center' }}>
-        De andere spelers in de liga zijn computerspelers om je te motiveren.
-      </p>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------
-export function Shop({ toast }: { toast: (m: string) => void }) {
-  const st = useStore();
-  const refillIn = st.hearts < MAX_HEARTS ? Math.max(0, HEART_REFILL_MS - (Date.now() - st.heartsUpdatedAt)) : 0;
-  const doubleActive = st.doubleXpUntil > Date.now();
-  return (
-    <div className="page">
-      <h1 className="section-title">Winkel</h1>
-      <div className="card row" style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 34 }}>💎</div>
-        <div className="grow">
-          <b style={{ fontSize: 22 }}>{st.gems}</b>
-          <div className="muted" style={{ fontSize: 14 }}>
-            edelstenen. Verdien er meer met lessen, kisten en toetsen.
-          </div>
-        </div>
-      </div>
-      <h2 className="section-title" style={{ fontSize: 19 }}>
-        Hartjes
-      </h2>
-      <div className="card row">
-        <div style={{ fontSize: 40 }}>❤️</div>
-        <div className="grow">
-          <b>Hartjes aanvullen</b>
-          <div className="muted" style={{ fontSize: 14 }}>
-            {st.hearts}/{MAX_HEARTS} hartjes
-            {refillIn > 0 && ` · volgende over ${Math.ceil(refillIn / 60000)} min`}
-          </div>
-        </div>
-        <button
-          className="btn small"
-          disabled={st.hearts >= MAX_HEARTS || st.gems < REFILL_COST}
-          onClick={() => st.buyRefill() && toast('❤️ Hartjes aangevuld!')}
-        >
-          💎 {REFILL_COST}
-        </button>
-      </div>
-      <div className="card row">
-        <div style={{ fontSize: 40 }}>♾️</div>
-        <div className="grow">
-          <b>Onbeperkt hartjes</b>
-          <div className="muted" style={{ fontSize: 14 }}>
-            Gratis! Zet hartjes uit als je zonder druk wilt leren.
-          </div>
-        </div>
-        <button
-          className={`toggle ${st.settings.unlimitedHearts ? 'on' : ''}`}
-          onClick={() => st.updateSettings({ unlimitedHearts: !st.settings.unlimitedHearts })}
-          aria-label="Onbeperkt hartjes"
-        />
-      </div>
-      <h2 className="section-title" style={{ fontSize: 19 }}>
-        Power-ups
-      </h2>
-      <div className="card row">
-        <div style={{ fontSize: 40 }}>🧊</div>
-        <div className="grow">
-          <b>Streak bevriezen</b>
-          <div className="muted" style={{ fontSize: 14 }}>
-            Beschermt je streak als je een dag mist. Je hebt er {st.streakFreezes}/2.
-          </div>
-        </div>
-        <button className="btn small" disabled={st.streakFreezes >= 2 || st.gems < FREEZE_COST} onClick={() => st.buyFreeze() && toast('🧊 Streak-bevriezer gekocht!')}>
-          💎 {FREEZE_COST}
-        </button>
-      </div>
-      <div className="card row">
-        <div style={{ fontSize: 40 }}>⚡</div>
-        <div className="grow">
-          <b>Dubbele XP</b>
-          <div className="muted" style={{ fontSize: 14 }}>
-            {doubleActive
-              ? `Actief! Nog ${Math.ceil((st.doubleXpUntil - Date.now()) / 60000)} minuten.`
-              : 'Verdien 15 minuten lang dubbele XP.'}
-          </div>
-        </div>
-        <button className="btn small" disabled={doubleActive || st.gems < DOUBLE_XP_COST} onClick={() => st.buyDoubleXp() && toast('⚡ Dubbele XP is actief!')}>
-          💎 {DOUBLE_XP_COST}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------
 interface Achievement {
   id: string;
   emoji: string;
@@ -452,7 +308,7 @@ export function Profile({ openSettings }: { openSettings: () => void }) {
           <h1 style={{ margin: 0 }}>{st.name || 'Leerling'}</h1>
           <div className="muted">Lid sinds {since}</div>
           <div className="chip" style={{ marginTop: 6 }}>
-            🇷🇸 Servisch · {LEAGUES[st.league.tier].emoji} {LEAGUES[st.league.tier].name}
+            🇷🇸 Servisch
           </div>
         </div>
         <button className="icon-btn" onClick={openSettings} aria-label="Instellingen" style={{ fontSize: 26 }}>

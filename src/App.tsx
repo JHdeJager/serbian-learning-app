@@ -1,31 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore, MAX_HEARTS, todayXp } from './lib/store';
-import { competitors, LEAGUES } from './lib/league';
 import { Home } from './screens/Home';
 import { LessonScreen, type SessionSpec } from './screens/LessonScreen';
-import { Guide, League, Letters, Onboarding, Practice, Profile, SettingsScreen, Shop, Words } from './screens/Screens';
+import { Guide, Letters, Onboarding, Practice, Profile, SettingsScreen, Words } from './screens/Screens';
 import { Mascot } from './components/Mascot';
 import { onVoicesChanged } from './lib/speech';
-import { REFILL_COST } from './lib/store';
 import { StoryScreen } from './screens/Stories';
 
-type Tab = 'learn' | 'letters' | 'practice' | 'league' | 'shop' | 'profile';
+type Tab = 'learn' | 'letters' | 'practice' | 'profile';
 type Sub = { kind: 'guide'; unitId: string } | { kind: 'settings' } | { kind: 'words' } | null;
 
 const TABS: { id: Tab; label: string; ico: string }[] = [
   { id: 'learn', label: 'Leren', ico: '🏠' },
   { id: 'letters', label: 'Letters', ico: 'Ћ' },
   { id: 'practice', label: 'Oefenen', ico: '💪' },
-  { id: 'league', label: 'Liga', ico: '🏆' },
-  { id: 'shop', label: 'Winkel', ico: '🛍️' },
   { id: 'profile', label: 'Profiel', ico: '🦔' }
 ];
 
-function SidePanel({ goTab }: { goTab: (t: Tab) => void }) {
+function SidePanel() {
   const st = useStore();
   const xpToday = todayXp(st);
-  const list = competitors(st.league, st.name);
-  const rank = list.findIndex((c) => c.isMe) + 1;
   return (
     <>
       <div className="card">
@@ -38,19 +32,6 @@ function SidePanel({ goTab }: { goTab: (t: Tab) => void }) {
         <div className={`progress ${xpToday >= st.dailyGoal ? 'gold' : ''}`} style={{ marginTop: 10 }}>
           <div style={{ width: `${Math.min(100, (xpToday / st.dailyGoal) * 100)}%` }} />
         </div>
-      </div>
-      <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <b>
-            {LEAGUES[st.league.tier].emoji} Liga {LEAGUES[st.league.tier].name}
-          </b>
-          <button className="btn flat small" onClick={() => goTab('league')}>
-            Bekijk
-          </button>
-        </div>
-        <p className="muted" style={{ margin: '6px 0 0' }}>
-          Je staat op plek {rank} met {st.league.xp} XP deze week.
-        </p>
       </div>
       <div className="card row">
         <Mascot size={70} mood={st.streak ? 'cheer' : 'happy'} />
@@ -85,7 +66,6 @@ export default function App() {
     const s = useStore.getState();
     s.syncHearts();
     s.checkStreak();
-    s.checkLeague();
     const iv = setInterval(() => useStore.getState().syncHearts(), 30000);
     const off = onVoicesChanged(() => force((x) => x + 1));
     return () => {
@@ -189,8 +169,6 @@ export default function App() {
           setStory(id);
         }}
       />;
-  else if (tab === 'league') content = <League />;
-  else if (tab === 'shop') content = <Shop toast={toast} />;
   else content = <Profile openSettings={() => openSub({ kind: 'settings' })} />;
 
   const unlimited = st.settings.unlimitedHearts;
@@ -220,10 +198,6 @@ export default function App() {
               <span className="emoji">🔥</span>
               {st.streak}
             </button>
-            <button className="stat gems" onClick={() => goTab('shop')}>
-              <span className="emoji">💎</span>
-              {st.gems}
-            </button>
             <button className="stat hearts" onClick={() => setHeartsModal(true)}>
               <span className="emoji">❤️</span>
               {unlimited ? '∞' : st.hearts}
@@ -233,7 +207,7 @@ export default function App() {
         <div className="main-row">
           <div className="main-col">{content}</div>
           <aside className="aside">
-            <SidePanel goTab={goTab} />
+            <SidePanel />
           </aside>
         </div>
       </div>
@@ -245,13 +219,20 @@ export default function App() {
             <h2>{unlimited ? 'Onbeperkt hartjes' : st.hearts >= MAX_HEARTS ? 'Je hartjes zijn vol!' : `Je hebt ${st.hearts} hartjes`}</h2>
             <p className="muted">
               {unlimited
-                ? 'Je verliest geen hartjes bij fouten. Dit kun je uitzetten in de winkel of de instellingen.'
+                ? 'Je verliest geen hartjes bij fouten. Dit kun je uitzetten in Profiel → Instellingen.'
                 : 'Bij elke fout in een les verlies je een hartje. Elke 30 minuten krijg je er een terug, en met oefenen verdien je er een.'}
             </p>
             {!unlimited && st.hearts < MAX_HEARTS && (
               <>
-                <button className="btn block" disabled={st.gems < REFILL_COST} onClick={() => st.buyRefill() && setHeartsModal(false)}>
-                  Aanvullen voor 💎 {REFILL_COST}
+                <button
+                  className="btn block"
+                  onClick={() => {
+                    st.updateSettings({ unlimitedHearts: true });
+                    setHeartsModal(false);
+                    toast('♾️ Onbeperkt hartjes staat aan');
+                  }}
+                >
+                  Onbeperkt hartjes aanzetten
                 </button>
                 <button
                   className="btn ghost block"

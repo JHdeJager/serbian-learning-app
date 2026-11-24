@@ -6,7 +6,7 @@ import {
   buildUnitTest,
   type Exercise
 } from '../lib/generator';
-import { REFILL_COST, todayXp, useStore, type LessonResult } from '../lib/store';
+import { todayXp, useStore, type LessonResult } from '../lib/store';
 import { sfx, vibrate } from '../lib/sound';
 import { CloseIcon } from '../components/Icons';
 import { Mascot } from '../components/Mascot';
@@ -349,17 +349,17 @@ export function LessonScreen({ spec, onExit }: { spec: SessionSpec; onExit: () =
             <Mascot mood="sad" size={110} />
             <h2>Je hartjes zijn op!</h2>
             <p className="muted">
-              Elke 30 minuten krijg je er een terug. Je kunt ook je hartjes aanvullen met edelstenen, of oefenen om hartjes te
-              verdienen.
+              Elke 30 minuten krijg je er een terug, en met oefenen verdien je er een. Wil je zonder hartjes verder leren? Zet dan
+              onbeperkt hartjes aan.
             </p>
             <button
               className="btn block"
-              disabled={st.gems < REFILL_COST}
               onClick={() => {
-                if (useStore.getState().buyRefill()) setNoHearts(false);
+                useStore.getState().updateSettings({ unlimitedHearts: true });
+                setNoHearts(false);
               }}
             >
-              Aanvullen voor 💎 {REFILL_COST}
+              Onbeperkt hartjes aanzetten
             </button>
             <button className="btn ghost block" onClick={onExit}>
               Stoppen

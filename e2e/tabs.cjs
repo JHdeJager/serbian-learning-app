@@ -18,7 +18,7 @@ const OUT = process.env.OUT || '/tmp/shots';
   }, !!process.env.CYR);
   await page.reload();
   await page.waitForTimeout(400);
-  const tabs = ['Leren', 'Letters', 'Oefenen', 'Liga', 'Winkel', 'Profiel'];
+  const tabs = ['Leren', 'Letters', 'Oefenen', 'Profiel'];
   for (const t of tabs) {
     await page.locator('.nav button', { hasText: t }).click();
     await page.waitForTimeout(250);

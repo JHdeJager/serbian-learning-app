@@ -1,13 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { addDays, dayKey, daysBetween, weekStart } from './date';
-import { finalRank } from './league';
+import { addDays, dayKey, daysBetween } from './date';
 
 export const MAX_HEARTS = 5;
 export const HEART_REFILL_MS = 30 * 60 * 1000;
-export const REFILL_COST = 350;
-export const FREEZE_COST = 200;
-export const DOUBLE_XP_COST = 150;
 
 export interface WordStat {
   /** 0..5 */
@@ -26,22 +22,12 @@ export interface Settings {
   unlimitedHearts: boolean;
 }
 
-export interface LeagueState {
-  week: string;
-  tier: number;
-  /** xp earned this week */
-  xp: number;
-  /** result of the previous week, shown once */
-  lastResult?: { tier: number; rank: number; moved: 'up' | 'down' | 'stay' };
-}
-
 export interface LessonResult {
   xp: number;
   correct: number;
   total: number;
   perfect: boolean;
   seconds: number;
-  gems: number;
   streakIncreased: boolean;
   newStreak: number;
 }
@@ -51,7 +37,6 @@ export interface State {
   name: string;
   dailyGoal: number;
   xp: number;
-  gems: number;
   hearts: number;
   heartsUpdatedAt: number;
   streak: number;
@@ -73,9 +58,7 @@ export interface State {
   lessonsDone: number;
   perfectLessons: number;
   minutesLearned: number;
-  doubleXpUntil: number;
   settings: Settings;
-  league: LeagueState;
   createdAt: number;
 
   // actions
@@ -86,9 +69,6 @@ export interface State {
   syncHearts: () => void;
   loseHeart: () => void;
   gainHeart: () => void;
-  buyRefill: () => boolean;
-  buyFreeze: () => boolean;
-  buyDoubleXp: () => boolean;
   recordWord: (id: string, correct: boolean) => void;
   addMistake: (key: string) => void;
   clearMistakes: (keys: string[]) => void;
@@ -103,7 +83,6 @@ export interface State {
   }) => LessonResult;
   openChest: (id: string) => number;
   checkStreak: () => void;
-  checkLeague: () => void;
   importState: (json: string) => boolean;
   resetAll: () => void;
 }
@@ -124,7 +103,6 @@ function initial() {
     name: '',
     dailyGoal: 20,
     xp: 0,
-    gems: 500,
     hearts: MAX_HEARTS,
     heartsUpdatedAt: now,
     streak: 0,
@@ -141,9 +119,7 @@ function initial() {
     lessonsDone: 0,
     perfectLessons: 0,
     minutesLearned: 0,
-    doubleXpUntil: 0,
     settings: defaultSettings,
-    league: { week: weekStart(), tier: 0, xp: 0 } as LeagueState,
     createdAt: now
   };
 }
@@ -182,25 +158,6 @@ export const useStore = create<State>()(
         set({ hearts: hearts - 1, heartsUpdatedAt: hearts >= MAX_HEARTS ? Date.now() : get().heartsUpdatedAt });
       },
       gainHeart: () => set({ hearts: Math.min(MAX_HEARTS, get().hearts + 1) }),
-      buyRefill: () => {
-        const { gems, hearts } = get();
-        if (gems < REFILL_COST || hearts >= MAX_HEARTS) return false;
-        set({ gems: gems - REFILL_COST, hearts: MAX_HEARTS, heartsUpdatedAt: Date.now() });
-        return true;
-      },
-      buyFreeze: () => {
-        const { gems, streakFreezes } = get();
-        if (gems < FREEZE_COST || streakFreezes >= 2) return false;
-        set({ gems: gems - FREEZE_COST, streakFreezes: streakFreezes + 1 });
-        return true;
-      },
-      buyDoubleXp: () => {
-        const { gems, doubleXpUntil } = get();
-        if (gems < DOUBLE_XP_COST || doubleXpUntil > Date.now()) return false;
-        set({ gems: gems - DOUBLE_XP_COST, doubleXpUntil: Date.now() + 15 * 60 * 1000 });
-        return true;
-      },
-
       recordWord: (id, correct) => {
         const words = { ...get().words };
         const cur = words[id] ?? { s: 0, seen: 0, wrong: 0, last: 0 };
@@ -223,9 +180,7 @@ export const useStore = create<State>()(
         const st = get();
         const today = dayKey();
         const perfect = correct === total && total > 0;
-        let xp = baseXp + (perfect ? 5 : 0);
-        if (st.doubleXpUntil > Date.now()) xp *= 2;
-        const gems = 5 + (perfect ? 5 : 0) + (unitTestId ? 20 : 0);
+        const xp = baseXp + (perfect ? 5 : 0);
 
         const hadToday = (st.xpByDay[today] ?? 0) > 0;
         const streakIncreased = !hadToday;
@@ -236,12 +191,8 @@ export const useStore = create<State>()(
         const unitTests = { ...st.unitTests };
         if (unitTestId) unitTests[unitTestId] = true;
 
-        const league = { ...st.league };
-        if (league.week === weekStart()) league.xp += xp;
-
         set({
           xp: st.xp + xp,
-          gems: st.gems + gems,
           xpByDay: { ...st.xpByDay, [today]: (st.xpByDay[today] ?? 0) + xp },
           streak: newStreak,
           longestStreak: Math.max(st.longestStreak, newStreak),
@@ -251,16 +202,16 @@ export const useStore = create<State>()(
           lessonsDone: st.lessonsDone + 1,
           perfectLessons: st.perfectLessons + (perfect ? 1 : 0),
           minutesLearned: st.minutesLearned + seconds / 60,
-          league,
           hearts: healHeart ? Math.min(MAX_HEARTS, st.hearts + 1) : st.hearts
         });
-        return { xp, correct, total, perfect, seconds, gems, streakIncreased, newStreak };
+        return { xp, correct, total, perfect, seconds, streakIncreased, newStreak };
       },
 
       openChest: (id) => {
         if (get().chests[id]) return 0;
-        const amount = 20 + Math.floor(Math.random() * 4) * 10;
-        set({ chests: { ...get().chests, [id]: true }, gems: get().gems + amount });
+        // a small XP bonus (not counted towards the daily goal / streak)
+        const amount = 10 + Math.floor(Math.random() * 3) * 5;
+        set({ chests: { ...get().chests, [id]: true }, xp: get().xp + amount });
         return amount;
       },
 
@@ -281,25 +232,6 @@ export const useStore = create<State>()(
           });
         } else {
           set({ streak: 0 });
-        }
-      },
-
-      checkLeague: () => {
-        const { league } = get();
-        const current = weekStart();
-        if (league.week === current) return;
-        {
-          const rank = finalRank(league);
-          let tier = league.tier;
-          let moved: 'up' | 'down' | 'stay' = 'stay';
-          if (league.xp > 0 && rank <= 5 && tier < 4) {
-            tier += 1;
-            moved = 'up';
-          } else if ((league.xp === 0 || rank >= 13) && tier > 0) {
-            tier -= 1;
-            moved = 'down';
-          }
-          set({ league: { week: current, tier, xp: 0, lastResult: league.xp > 0 ? { tier, rank, moved } : undefined } });
         }
       },
 

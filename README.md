@@ -14,8 +14,8 @@ en werkt daarna ook offline.
 - **Gids** per unit met uitleg over grammatica en uitspraak, in het Nederlands.
 - **Cyrillisch alfabet**: aparte lessen (tabblad "Letters") en een schakelaar om de hele cursus in
   het Cyrillisch te tonen.
-- **Motivatie**: XP, dagdoel, streaks 🔥, hartjes ❤️, edelstenen 💎, schatkisten, unit-toetsen 🏆,
-  een wekelijkse liga, prestaties en een winkel (streak bevriezen, dubbele XP, hartjes aanvullen).
+- **Motivatie**: XP, dagdoel, streaks 🔥, hartjes ❤️ (of onbeperkt hartjes), schatkisten met bonus-XP,
+  unit-toetsen 🏆 en prestaties.
 - **Oefenen**: persoonlijke herhaling van zwakke woorden (spaced repetition) en je fouten opnieuw doen.
 - **Woordenlijst** met alle geleerde woorden en hoe goed je ze kent.
 - **Fouten worden aan het eind van de les herhaald**, net als in Duolingo.

@@ -153,7 +153,7 @@ export function Home({ start, openGuide, toast }: { start: (s: SessionSpec) => v
                       onClick={() => {
                         if (node.kind === 'chest' && state === 'open') {
                           const amount = openChest(node.id);
-                          if (amount) toast(`🎁 Je hebt ${amount} edelstenen gevonden!`);
+                          if (amount) toast(`🎁 Je hebt ${amount} bonus-XP gevonden!`);
                           return;
                         }
                         setOpen(isOpen ? null : key);

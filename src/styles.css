@@ -249,9 +249,6 @@ h3 {
 .stat.streak.off {
   color: var(--muted);
 }
-.stat.gems {
-  color: #1098ad;
-}
 .stat.hearts {
   color: var(--red);
 }
@@ -1418,11 +1415,6 @@ h3 {
 .list-item:last-child {
   border-bottom: none;
 }
-.league-row.me {
-  background: var(--blue-light);
-  border-radius: 12px;
-  border-bottom-color: transparent;
-}
 .rank {
   width: 28px;
   text-align: center;
@@ -1446,20 +1438,6 @@ h3 {
   justify-content: center;
   font-size: 24px;
   flex-shrink: 0;
-}
-.zone {
-  text-align: center;
-  font-weight: 900;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 8px;
-}
-.zone.up {
-  color: var(--green);
-}
-.zone.down {
-  color: var(--red);
 }
 
 .toggle {

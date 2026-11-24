@@ -134,7 +134,6 @@ export function ResultFlow({
                 </div>
               </div>
             </div>
-            <p className="muted">+ 💎 {result.gems} edelstenen</p>
           </>
         )}
         {current === 'streak' && (
